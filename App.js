@@ -4,11 +4,12 @@ import {
   StyleSheet,
   Text,
   View,
-  TouchableOpacity, 
+  TouchableOpacity,
   TextInput,
   ScrollView,
   ActivityIndicator,
   Alert,
+  Platform,
 } from "react-native";
 import { theme } from "./colors";
 import AsnyncStorage from "@react-native-async-storage/async-storage";
@@ -44,6 +45,15 @@ export default function App() {
     setText("");
   };
   const deleteToDo = async (key) => {
+    if (Platform.OS === "web") {
+      const ok = confirm("삭제하시겠습니까?");
+      if (ok) {
+        const newToDos = { ...toDos };
+        delete newToDos[key];
+        setToDos(newToDos);
+        saveToDos(newToDos);
+      }
+    }
     Alert.alert("투두 삭제", "삭제 하시겠습니까?", [
       { text: "취소" },
       {
@@ -74,9 +84,16 @@ export default function App() {
   const loadToDos = async () => {
     try {
       const s = await AsnyncStorage.getItem(STORAGE_KEY);
+      if (s) {
+        setToDos(JSON.parse(s));
+      }
       const isWork = await AsnyncStorage.getItem("working");
-      setWorking(JSON.parse(isWork));
-      setToDos(JSON.parse(s));
+      if (isWork) {
+        setWorking(JSON.parse(isWork));
+      } else {
+        setWorking(true);
+      }
+
       setLoading(false);
     } catch (error) {
       alert(error);
@@ -89,7 +106,7 @@ export default function App() {
 
   return (
     <View style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style="light" />
       <View style={styles.header}>
         <TouchableOpacity onPress={work}>
           <Text
